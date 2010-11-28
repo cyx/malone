@@ -60,7 +60,9 @@ scope do
     sender = flexmock("smtp sender")
   
     # We start out by capturing the Net::SMTP.new part
-    flexmock(Net::SMTP).should_receive(:new).and_return(sender)
+    flexmock(Net::SMTP).should_receive(:new).with(
+      "smtp.gmail.com", 587
+    ).and_return(sender)
   
     # Since we configured it with tls: true, then enable_starttls 
     # should be called
@@ -103,7 +105,9 @@ scope do
     # and verify that finish is still called
     sender = flexmock("smtp sender")
 
-    flexmock(Net::SMTP).should_receive(:new).and_return(sender)
+    flexmock(Net::SMTP).should_receive(:new).with(
+      "smtp.gmail.com", 587
+    ).and_return(sender)
 
     sender.should_receive(:enable_starttls).once
 
