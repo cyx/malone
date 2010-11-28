@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'malone'
   s.version = "0.0.1"
-  s.summary = %{Dead-simple Ruby mailing solution that always delivers.}
+  s.summary = %{Dead-simple Ruby mailing solution which always delivers.}
   s.date = "2010-11-28"
   s.author = "Cyril David"
   s.email = "cyx@pipetodevnull.com"
