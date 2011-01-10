@@ -3,11 +3,11 @@ Originally taken from my initial draft [here][blogpost].
 [blogpost]: http://www.pipetodevnull.com/past/2010/11/27/simple_mailer/
 
 ## USAGE
-    
+
     $ gem install malone
 
     require "malone"
-  
+
     # typically you would do this somewhere in the bootstrapping
     # part of your application
 
@@ -27,6 +27,28 @@ Originally taken from my initial draft [here][blogpost].
 
 That's it!
 
-## LICENSE
+## TESTING
+
+    require "malone/sandbox"
+
+    Malone.deliver(from: "me@me.com", to: "you@me.com",
+                   subject: "Test subject", body: "Great!")
+
+    Malone.deliveries.size == 1
+    # => true
+
+    envelope = Malone.deliveries.first
+
+    "me@me.com" == envelope.from
+    # => true
+
+    "you@me.com" == envelope.to
+    # => true
+
+    "FooBar" == envelope.body
+    # => true
+
+    "Hello World" == envelope.subject## LICENSE
+    # => true
 
 MIT
