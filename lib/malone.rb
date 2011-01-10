@@ -3,7 +3,7 @@ require "ostruct"
 require "mailfactory"
 
 class Malone
-  VERSION = "0.0.1"
+  VERSION = "0.0.2"
 
   attr :envelope
 
