@@ -17,7 +17,7 @@ class FlexMock
     end
 
     class AssertionFailedError < StandardError; end
-    
+
     def assertion_failed_error
       Cutest::AssertionFailed
     end
@@ -39,15 +39,6 @@ end
 class Cutest::Scope
   include FlexMock::ArgumentTypes
   include FlexMock::MockContainer
-  
+
   include Cutest::Flexmocked
-end
-
-module Kernel
-  def flunk(offset = 1)
-    exception = Cutest::AssertionFailed.new
-    exception.set_backtrace([caller[offset]])
-
-    raise exception
-  end
 end
