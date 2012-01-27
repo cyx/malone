@@ -3,8 +3,6 @@ require "ostruct"
 require "mailfactory"
 
 class Malone
-  VERSION = "0.0.2"
-
   attr :envelope
 
   def self.deliver(params = {})
@@ -23,7 +21,8 @@ class Malone
     @envelope = MailFactory.new
     @envelope.from    = params[:from]
     @envelope.to      = params[:to]
-    @envelope.text    = params[:body]
+    @envelope.text    = params[:text]
+    @envelope.html    = params[:html] if params[:html]
     @envelope.subject = params[:subject]
   end
 
