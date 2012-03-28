@@ -156,6 +156,26 @@ scope do
     assert $smtp[:finish]
   end
 
+  test "Malone.deliver forwards to Malone.current" do |m|
+    Malone.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
+                   subject: "SUB", text: "TEXT")
+
+    assert_equal "smtp.gmail.com", $smtp.host
+    assert_equal 587, $smtp.port
+
+    assert $smtp[:enable_starttls_auto]
+    assert_equal "mydomain.com", $smtp[:domain]
+    assert_equal "foo@bar.com", $smtp[:user]
+    assert_equal "pass1234", $smtp[:password]
+    assert_equal :login, $smtp[:auth]
+
+    assert_equal ["recipient@me.com"], $smtp[:to]
+    assert_equal "no-reply@mydomain.com", $smtp[:from]
+
+    assert $smtp[:started]
+    assert $smtp[:finish]
+  end
+
   test "calls #finish even when it fails during send_message" do |m|
     class FakeSMTP
       def send_message(*args)

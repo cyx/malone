@@ -20,6 +20,10 @@ class Malone
     return new(@config)
   end
 
+  def self.deliver(dict)
+    current.deliver(dict)
+  end
+
   def initialize(config)
     @config = config
   end

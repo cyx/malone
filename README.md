@@ -9,7 +9,7 @@ $ gem install malone
 
 require "malone"
 
-# typically you would do this somewhere in the bootstrapping
+# Typically you would do this somewhere in the bootstrapping
 # part of your application
 
 m = Malone.connect(url: "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587",
@@ -20,6 +20,11 @@ m.deliver(from: "me@me.com", to: "you@me.com",
 
 # Malone.current will now remember the last configuration you setup.
 Malone.current.config == m.config
+
+# Now you can also do Malone.deliver, which is syntactic sugar
+# for Malone.current.deliver
+Malone.deliver(from: "me@me.com", to: "you@me.com",
+               subject: "Test subject", text: "Great!")
 
 # Also starting with Malone 1.0, you can also pass in :html
 # for multipart emails.
