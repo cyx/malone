@@ -4,6 +4,8 @@ require "net/smtp"
 require "uri"
 
 class Malone
+  attr :config
+
   def self.connect(options = {})
     @config = Configuration.new(options)
 
@@ -17,8 +19,6 @@ class Malone
 
     return new(@config)
   end
-
-  attr :config
 
   def initialize(config)
     @config = config
