@@ -11,7 +11,9 @@ class Malone
   end
 
   def self.current
-    raise RuntimeError, "missing configuration" unless defined?(@config)
+    unless defined?(@config)
+      raise RuntimeError, "Missing configuration: Try doing `Malone.connect`."
+    end
 
     return new(@config)
   end
