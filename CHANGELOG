@@ -1,0 +1,19 @@
+1.0.0
+
+- Malone.configure has been replaced with Malone.connect
+  Use Malone.current to retrieve the last configured Malone
+  instance (using Malone.connect)
+
+- Malone.deliver has been replaced with an instance method.
+  Call deliver (with the same arguments as before) on the
+  return value of Malone.connect or Malone.current.
+
+- Malone#deliver now receives :text and :html instead of :body.
+
+- No need to pass in TLS. it's tries to do TLS automatically.
+
+- Errors during SMTP authentication (and any other error) aren't
+  trapped silently now. (via @tizoc, @elpollila)
+
+- Configuration parameters are more strict (i.e. passing :password
+  would throw a NoMethodError via @tizoc, @elpollila)

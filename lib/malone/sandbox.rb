@@ -5,8 +5,8 @@ class Malone
     @deliveries ||= []
   end
 
-  def self.deliver(*args)
-    deliveries << OpenStruct.new(*args)
+  def deliver(*args)
+    self.class.deliveries << OpenStruct.new(*args)
   end
 end
 

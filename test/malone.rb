@@ -1,125 +1,195 @@
-require File.expand_path("helper", File.dirname(__FILE__))
+require_relative "helper"
 
-setup do
-  m = Malone.new(from: "me@me.com", to: "you@me.com",
-                 body: "FooBar", subject: "Hello World")
+test "basic configuration" do
+  m = Malone.connect(host: "smtp.gmail.com", port: 587,
+                     user: "foo@bar.com", password: "pass1234",
+                     domain: "foo.com", auth: "login")
+
+  c = m.config
+
+  assert_equal "smtp.gmail.com", c.host
+  assert_equal 587, c.port
+  assert_equal "foo@bar.com", c.user
+  assert_equal "pass1234", c.password
+  assert_equal "foo.com", c.domain
+  assert_equal :login, c.auth
 end
 
-test "envelope" do |m|
-  assert m.envelope.from == ["me@me.com"]
-  assert m.envelope.to   == ["you@me.com"]
+test "configuration via url" do
+  m = Malone.connect(url: "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587")
 
-  assert m.envelope.instance_variable_get(:@text)    == "FooBar"
-  assert m.envelope.get_header("subject") == ["=?utf-8?Q?Hello_World?="]
+  c = m.config
+
+  assert_equal "smtp.gmail.com", c.host
+  assert_equal 587, c.port
+  assert_equal "foo@bar.com", c.user
+  assert_equal "pass1234", c.password
 end
 
-test "delivering with no config" do |m|
-  assert_raise Malone::NotConfigured do
-    m.deliver
+test "configuration via url and params" do
+  m = Malone.connect(url: "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587",
+                     domain: "foo.com", auth: "login", password: "barbaz123")
+
+  c = m.config
+
+  assert_equal "smtp.gmail.com", c.host
+  assert_equal 587, c.port
+  assert_equal "foo@bar.com", c.user
+  assert_equal "foo.com", c.domain
+  assert_equal :login, c.auth
+
+  # We verify that parameters passed takes precedence over the URL.
+  assert_equal "barbaz123", c.password
+end
+
+test "configuration via MALONE_URL" do
+  ENV["MALONE_URL"] = "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587"
+
+  m = Malone.connect(domain: "foo.com", auth: "login")
+  c = m.config
+
+  assert_equal "smtp.gmail.com", c.host
+  assert_equal 587, c.port
+  assert_equal "foo@bar.com", c.user
+  assert_equal "foo.com", c.domain
+  assert_equal :login, c.auth
+end
+
+test "typos in configuration" do
+  assert_raise NoMethodError do
+    Malone.connect(pass: "pass")
   end
 end
 
-test "configuring" do
-  Malone.configure(
-    host: "smtp.gmail.com",
-    port: 587,
-    domain: "mydomain.com",
-    tls: true,
-    user: "me@mydomain.com",
-    pass: "mypass",
-    auth: :login
-  )
+test "Malone.connect doesn't mutate the options" do
+  ex = nil
 
-  assert Malone.config.host == "smtp.gmail.com"
-  assert Malone.config.port == 587
-  assert Malone.config.domain == "mydomain.com"
-  assert Malone.config.tls  == true
-  assert Malone.config.user == "me@mydomain.com"
-  assert Malone.config.pass == "mypass"
-  assert Malone.config.auth == :login
+  begin
+    Malone.connect({}.freeze)
+  rescue RuntimeError => e
+    ex = e
+  end
+
+  assert_equal nil, ex
+end
+
+test "Malone.current" do
+  Malone.connect(url: "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587")
+
+  c = Malone.current.config
+
+  assert_equal "smtp.gmail.com", c.host
+  assert_equal 587, c.port
+  assert_equal "foo@bar.com", c.user
+  assert_equal "pass1234", c.password
+end
+
+test "#envelope" do
+  m = Malone.connect
+
+  mail = m.envelope(to: "recipient@me.com", from: "no-reply@mydomain.com",
+                    subject: "SUB", text: "TEXT", html: "<h1>TEXT</h1>")
+
+  assert_equal ["recipient@me.com"], mail.to
+  assert_equal ["no-reply@mydomain.com"], mail.from
+  assert_equal ["=?utf-8?Q?SUB?="], mail.subject
+
+  assert_equal "TEXT", mail.instance_variable_get(:@text)
+  assert_equal "<h1>TEXT</h1>", mail.instance_variable_get(:@html)
 end
 
 scope do
-  setup do
-    Malone.configure(
-      host: "smtp.gmail.com",
-      port: 587,
-      domain: "mydomain.com",
-      tls: true,
-      user: "me@mydomain.com",
-      pass: "mypass",
-      auth: :login
-    )
-  end
+  class FakeSMTP < Struct.new(:host, :port)
+    def enable_starttls_auto
+      @enable_starttls_auto = true
+    end
 
-  test "delivering successfully" do
-    malone = Malone.new(to: "you@me.com", from: "me@me.com",
-                        subject: "My subject", body: "My body")
+    def start(domain, user, password, auth)
+      @domain, @user, @password, @auth = domain, user, password, auth
 
-    # Let's begin the mocking fun
-    sender = flexmock("smtp sender")
+      @started = true
+    end
 
-    # We start out by capturing the Net::SMTP.new part
-    flexmock(Net::SMTP).should_receive(:new).with(
-      "smtp.gmail.com", 587
-    ).and_return(sender)
+    def started?
+      defined?(@started)
+    end
 
-    # Since we configured it with tls: true, then enable_starttls
-    # should be called
-    sender.should_receive(:enable_starttls).once
+    def finish
+      @finish = true
+    end
 
-    # Now we verify that start was indeed called exactly with the arguments
-    # we passed in
-    sender.should_receive(:start).once.with(
-      "mydomain.com", "me@mydomain.com", "mypass", :login,
-    )
+    def send_message(blob, from, to)
+      @blob, @from, @to = blob, from, to
+    end
 
-    # This is a bit of a hack, since envelope.to_s changes everytime.
-    # Specifically, The Message-ID part changes.
-    envelope_to_s = malone.envelope.to_s
-
-    # So we get one result of envelope.to_s
-    flexmock(malone.envelope).should_receive(:to_s).and_return(envelope_to_s)
-
-    # And then we make sure that that value of envelope.to_s is used
-    # instead of making it generate a new Message-ID
-    sender.should_receive(:send_message).once.with(
-      envelope_to_s, "me@me.com", ["you@me.com"]
-    ).and_return("OK")
-
-    # I think this is important, otherwise the connection to the
-    # smtp server won't be closed properly
-    sender.should_receive(:finish).once
-
-    # One important part of the API of malone is that deliver
-    # should return the result of Net::SMTP#send_message.
-    assert "OK" == malone.deliver
-  end
-
-  test "delivering and failing" do
-    malone = Malone.new(to: "you@me.com", from: "me@me.com",
-                        subject: "My subject", body: "My body")
-
-    # This is more or less the same example as above,
-    # except that here we make send_message fail
-    # and verify that finish is still called
-    sender = flexmock("smtp sender")
-
-    flexmock(Net::SMTP).should_receive(:new).with(
-      "smtp.gmail.com", 587
-    ).and_return(sender)
-
-    sender.should_receive(:enable_starttls).once
-
-    sender.should_receive(:start).once.with(
-      "mydomain.com", "me@mydomain.com", "mypass", :login,
-    )
-
-    sender.should_receive(:send_message).once.and_raise(StandardError)
-    sender.should_receive(:finish).once
-
-    assert_raise StandardError do
-      assert nil == malone.deliver
+    def [](key)
+      instance_variable_get(:"@#{key}")
     end
   end
+
+  module Net
+    def SMTP.new(host, port)
+      $smtp = FakeSMTP.new(host, port)
+    end
+  end
+
+  setup do
+    Malone.connect(url: "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587",
+                   domain: "mydomain.com", auth: :login)
+  end
+
+  test "delivering successfully" do |m|
+    m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
+              subject: "SUB", text: "TEXT")
+
+    assert_equal "smtp.gmail.com", $smtp.host
+    assert_equal 587, $smtp.port
+
+    assert $smtp[:enable_starttls_auto]
+    assert_equal "mydomain.com", $smtp[:domain]
+    assert_equal "foo@bar.com", $smtp[:user]
+    assert_equal "pass1234", $smtp[:password]
+    assert_equal :login, $smtp[:auth]
+
+    assert_equal ["recipient@me.com"], $smtp[:to]
+    assert_equal "no-reply@mydomain.com", $smtp[:from]
+
+    assert $smtp[:started]
+    assert $smtp[:finish]
+  end
+
+  test "calls #finish even when it fails during send_message" do |m|
+    class FakeSMTP
+      def send_message(*args)
+        raise
+      end
+    end
+
+    begin
+      m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
+                subject: "SUB", text: "TEXT")
+    rescue
+    end
+
+    assert $smtp[:started]
+    assert $smtp[:finish]
+  end
+end
+
+test "sandbox" do
+  require "malone/sandbox"
+
+  m = Malone.connect
+  m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
+            subject: "SUB", text: "TEXT", html: "<h1>TEXT</h1>")
+
+  assert_equal 1, Malone.deliveries.size
+
+  mail = Malone.deliveries.first
+
+  assert_equal "no-reply@mydomain.com", mail.from
+  assert_equal "recipient@me.com", mail.to
+  assert_equal "SUB", mail.subject
+  assert_equal "TEXT", mail.text
+  assert_equal "<h1>TEXT</h1>", mail.html
 end

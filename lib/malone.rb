@@ -1,47 +1,89 @@
-require "net/smtp"
-require "ostruct"
+require "cgi"
 require "mailfactory"
+require "net/smtp"
+require "uri"
 
 class Malone
-  attr :envelope
+  def self.connect(options = {})
+    @config = Configuration.new(options)
 
-  def self.deliver(params = {})
-    new(params).deliver
-  end
-  
-  def self.configure(hash)
-    @config = OpenStruct.new(hash)
+    current
   end
 
-  def self.config
-    @config
+  def self.current
+    raise RuntimeError, "missing configuration" unless defined?(@config)
+
+    return new(@config)
   end
 
-  def initialize(params = {})
-    @envelope = MailFactory.new
-    @envelope.from    = params[:from]
-    @envelope.to      = params[:to]
-    @envelope.text    = params[:text]
-    @envelope.html    = params[:html] if params[:html]
-    @envelope.subject = params[:subject]
+  attr :config
+
+  def initialize(config)
+    @config = config
   end
 
-  def deliver
-    smtp = Net::SMTP.new config.host, config.port
-    smtp.enable_starttls if config.tls
-    
+  def deliver(dict)
+    mail = envelope(dict)
+
+    smtp = Net::SMTP.new(config.host, config.port)
+    smtp.enable_starttls_auto
+
     begin
-      smtp.start(config.domain, config.user, config.pass, config.auth)
-      smtp.send_message(envelope.to_s, envelope.from.first, envelope.to)
+      smtp.start(config.domain, config.user, config.password, config.auth)
+      smtp.send_message(mail.to_s, mail.from.first, mail.to)
     ensure
-      smtp.finish
+      smtp.finish if smtp.started?
     end
   end
 
-private
-  NotConfigured = Class.new(StandardError)
+  def envelope(dict)
+    envelope = MailFactory.new
+    envelope.from    = dict[:from]
+    envelope.to      = dict[:to]
+    envelope.text    = dict[:text]
+    envelope.rawhtml = dict[:html] if dict[:html]
+    envelope.subject = dict[:subject]
 
-  def config
-    self.class.config or raise(NotConfigured)
+    return envelope
+  end
+
+  class Configuration
+    attr_accessor :host
+    attr_accessor :port
+    attr_accessor :user
+    attr_accessor :password
+    attr_accessor :domain
+    attr_accessor :auth
+
+    def initialize(options)
+      opts = options.dup
+
+      url = opts.delete(:url) || ENV["MALONE_URL"]
+
+      if url
+        uri = URI(url)
+
+        opts[:host]     ||= uri.host
+        opts[:port]     ||= uri.port.to_i
+        opts[:user]     ||= unescaped(uri.user)
+        opts[:password] ||= unescaped(uri.password)
+      end
+
+      opts.each do |key, val|
+        send(:"#{key}=", val)
+      end
+    end
+
+    def auth=(val)
+      @auth = val
+      @auth = @auth.to_sym if @auth
+    end
+
+  private
+    def unescaped(val)
+      return if val.to_s.empty?
+
+      CGI.unescape(val)
+    end
   end
 end

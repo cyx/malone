@@ -1,0 +1,6 @@
+desc "Run malone test suite :-)"
+task :test do
+  exec("cutest test/malone.rb")
+end
+
+task :default => :test
