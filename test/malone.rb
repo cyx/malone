@@ -63,11 +63,9 @@ end
 
 test "Malone.connect doesn't mutate the options" do
   ex = nil
-
   begin
     Malone.connect({}.freeze)
-  rescue RuntimeError => e
-    ex = e
+  rescue RuntimeError => ex
   end
 
   assert_equal nil, ex
