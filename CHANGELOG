@@ -17,3 +17,5 @@
 
 - Configuration parameters are more strict (i.e. passing :password
   would throw a NoMethodError via @tizoc, @elpollila)
+
+- malone/sandbox has been renamed to malone/test.

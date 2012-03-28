@@ -175,7 +175,7 @@ scope do
 end
 
 test "sandbox" do
-  require "malone/sandbox"
+  require "malone/test"
 
   m = Malone.connect
   m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",

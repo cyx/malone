@@ -35,7 +35,7 @@ That's it!
 ## TESTING
 
 ```ruby
-require "malone/sandbox"
+require "malone/test"
 
 m = Malone.connect(url: "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587",
                    domain: "mysite.com")
