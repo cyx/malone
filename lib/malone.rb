@@ -32,7 +32,7 @@ class Malone
     mail = envelope(dict)
 
     smtp = Net::SMTP.new(config.host, config.port)
-    smtp.enable_starttls_auto
+    smtp.enable_starttls_auto if config.tls
 
     begin
       smtp.start(config.domain, config.user, config.password, config.auth)
@@ -60,9 +60,12 @@ class Malone
     attr_accessor :password
     attr_accessor :domain
     attr_accessor :auth
+    attr_accessor :tls
 
     def initialize(options)
       opts = options.dup
+      
+      @tls = true
 
       url = opts.delete(:url) || ENV["MALONE_URL"]
 
