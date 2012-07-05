@@ -37,6 +37,7 @@ test "configuration via url and params" do
   assert_equal "foo@bar.com", c.user
   assert_equal "foo.com", c.domain
   assert_equal :login, c.auth
+  assert_equal true, c.tls
 
   # We verify that parameters passed takes precedence over the URL.
   assert_equal "barbaz123", c.password
@@ -45,7 +46,7 @@ end
 test "configuration via MALONE_URL" do
   ENV["MALONE_URL"] = "smtp://foo%40bar.com:pass1234@smtp.gmail.com:587"
 
-  m = Malone.connect(domain: "foo.com", auth: "login")
+  m = Malone.connect(domain: "foo.com", auth: "login", tls: false)
   c = m.config
 
   assert_equal "smtp.gmail.com", c.host
@@ -53,6 +54,7 @@ test "configuration via MALONE_URL" do
   assert_equal "foo@bar.com", c.user
   assert_equal "foo.com", c.domain
   assert_equal :login, c.auth
+  assert_equal false, c.tls
 end
 
 test "typos in configuration" do
