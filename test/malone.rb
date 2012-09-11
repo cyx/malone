@@ -213,3 +213,18 @@ test "sandbox" do
   assert_equal "TEXT", mail.text
   assert_equal "<h1>TEXT</h1>", mail.html
 end
+
+test "resetting the test sandbox" do
+  require "malone/test"
+
+  m = Malone.connect
+
+  2.times do
+    m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
+              subject: "SUB", text: "test")
+  end
+
+  assert 1 < Malone.deliveries.size
+  Malone.reset_deliveries
+  assert_equal 0, Malone.deliveries.size
+end
