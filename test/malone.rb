@@ -88,9 +88,12 @@ test "#envelope" do
   m = Malone.connect
 
   mail = m.envelope(to: "recipient@me.com", from: "no-reply@mydomain.com",
-                    subject: "SUB", text: "TEXT", html: "<h1>TEXT</h1>")
+                    subject: "SUB", text: "TEXT", html: "<h1>TEXT</h1>",
+                    cc: "cc@me.com", bcc: "bcc@me.com")
 
   assert_equal ["recipient@me.com"], mail.to
+  assert_equal ["cc@me.com"], mail.cc
+  assert_equal ["bcc@me.com"], mail.bcc
   assert_equal ["no-reply@mydomain.com"], mail.from
   assert_equal ["=?utf-8?Q?SUB?="], mail.subject
 
@@ -118,8 +121,8 @@ scope do
       @finish = true
     end
 
-    def send_message(blob, from, to)
-      @blob, @from, @to = blob, from, to
+    def send_message(blob, from, *recipients)
+      @blob, @from, @recipients = blob, from, recipients
     end
 
     def [](key)
@@ -140,7 +143,7 @@ scope do
 
   test "delivering successfully" do |m|
     m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
-              subject: "SUB", text: "TEXT")
+              subject: "SUB", text: "TEXT", cc: "cc@me.com", bcc: "bcc@me.com")
 
     assert_equal "smtp.gmail.com", $smtp.host
     assert_equal 587, $smtp.port
@@ -151,8 +154,11 @@ scope do
     assert_equal "pass1234", $smtp[:password]
     assert_equal :login, $smtp[:auth]
 
-    assert_equal ["recipient@me.com"], $smtp[:to]
+
+    assert_equal ["recipient@me.com", "cc@me.com", "bcc@me.com"], $smtp[:recipients]
     assert_equal "no-reply@mydomain.com", $smtp[:from]
+
+    assert ! $smtp[:blob].include?("bcc@me.com")
 
     assert $smtp[:started]
     assert $smtp[:finish]
@@ -171,7 +177,7 @@ scope do
     assert_equal "pass1234", $smtp[:password]
     assert_equal :login, $smtp[:auth]
 
-    assert_equal ["recipient@me.com"], $smtp[:to]
+    assert_equal ["recipient@me.com"], $smtp[:recipients]
     assert_equal "no-reply@mydomain.com", $smtp[:from]
 
     assert $smtp[:started]

@@ -36,14 +36,22 @@ class Malone
 
     begin
       smtp.start(config.domain, config.user, config.password, config.auth)
-      smtp.send_message(mail.to_s, mail.from.first, mail.to)
+      smtp.send_message(mail.to_s, mail.from.first, *recipients(mail))
     ensure
       smtp.finish if smtp.started?
     end
   end
 
+  def recipients(mail)
+    [].tap do |ret|
+      ret.push(*mail.to)
+      ret.push(*mail.cc)
+      ret.push(*mail.bcc)
+    end
+  end
+
   def envelope(dict)
-    envelope = MailFactory.new
+    envelope = Envelope.new
     envelope.from    = dict[:from]
     envelope.to      = dict[:to]
     envelope.cc      = dict[:cc] if dict[:cc]
@@ -66,7 +74,7 @@ class Malone
 
     def initialize(options)
       opts = options.dup
-      
+
       @tls = true
 
       url = opts.delete(:url) || ENV["MALONE_URL"]
@@ -95,6 +103,20 @@ class Malone
       return if val.to_s.empty?
 
       CGI.unescape(val)
+    end
+  end
+
+  class Envelope < MailFactory
+    attr :bcc
+
+    def initialize
+      super
+
+      @bcc = []
+    end
+
+    def bcc=(bcc)
+      @bcc.push(bcc)
     end
   end
 end
