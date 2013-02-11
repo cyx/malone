@@ -46,6 +46,8 @@ class Malone
     envelope = MailFactory.new
     envelope.from    = dict[:from]
     envelope.to      = dict[:to]
+    envelope.cc      = dict[:cc] if dict[:cc]
+    envelope.bcc     = dict[:bcc] if dict[:bcc]
     envelope.text    = dict[:text]
     envelope.rawhtml = dict[:html] if dict[:html]
     envelope.subject = dict[:subject]
