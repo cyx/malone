@@ -60,6 +60,8 @@ class Malone
     envelope.rawhtml = dict[:html] if dict[:html]
     envelope.subject = dict[:subject]
 
+    envelope.attach(dict[:attach]) if dict[:attach]
+
     return envelope
   end
 
