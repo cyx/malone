@@ -54,6 +54,7 @@ class Malone
     envelope = Envelope.new
     envelope.from    = dict[:from]
     envelope.to      = dict[:to]
+    envelope.replyto = dict[:replyto]
     envelope.cc      = dict[:cc] if dict[:cc]
     envelope.bcc     = dict[:bcc] if dict[:bcc]
     envelope.text    = dict[:text]

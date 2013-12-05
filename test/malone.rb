@@ -89,13 +89,15 @@ test "#envelope" do
 
   mail = m.envelope(to: "recipient@me.com", from: "no-reply@mydomain.com",
                     subject: "SUB", text: "TEXT", html: "<h1>TEXT</h1>",
-                    cc: "cc@me.com", bcc: "bcc@me.com")
+                    cc: "cc@me.com", bcc: "bcc@me.com",
+                    replyto: "other@me.com")
 
   assert_equal ["recipient@me.com"], mail.to
   assert_equal ["cc@me.com"], mail.cc
   assert_equal ["bcc@me.com"], mail.bcc
   assert_equal ["no-reply@mydomain.com"], mail.from
   assert_equal ["=?utf-8?Q?SUB?="], mail.subject
+  assert_equal "other@me.com", mail.replyto
 
   assert_equal "TEXT", mail.instance_variable_get(:@text)
   assert_equal "<h1>TEXT</h1>", mail.instance_variable_get(:@html)
