@@ -62,6 +62,8 @@ class Malone
     envelope.subject = dict[:subject]
 
     envelope.attach(dict[:attach]) if dict[:attach]
+    
+    envelope.add_attachment_as(*dict[:attach_as]) if dict[:attach_as]
 
     return envelope
   end
