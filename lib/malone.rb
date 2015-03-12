@@ -1,5 +1,5 @@
 require "cgi"
-require "mailfactory"
+require "kuvert"
 require "net/smtp"
 require "uri"
 
@@ -36,22 +36,14 @@ class Malone
 
     begin
       smtp.start(config.domain, config.user, config.password, config.auth)
-      smtp.send_message(mail.to_s, mail.from.first, *recipients(mail))
+      smtp.send_message(mail.to_s, mail.from.first, *mail.recipients)
     ensure
       smtp.finish if smtp.started?
     end
   end
 
-  def recipients(mail)
-    [].tap do |ret|
-      ret.push(*mail.to)
-      ret.push(*mail.cc)
-      ret.push(*mail.bcc)
-    end
-  end
-
   def envelope(dict)
-    envelope = Envelope.new
+    envelope = Kuvert.new
     envelope.from    = dict[:from]
     envelope.to      = dict[:to]
     envelope.replyto = dict[:replyto]
@@ -62,7 +54,6 @@ class Malone
     envelope.subject = dict[:subject]
 
     envelope.attach(dict[:attach]) if dict[:attach]
-    
     envelope.add_attachment_as(*dict[:attach_as]) if dict[:attach_as]
 
     return envelope
@@ -108,20 +99,6 @@ class Malone
       return if val.to_s.empty?
 
       CGI.unescape(val)
-    end
-  end
-
-  class Envelope < MailFactory
-    attr :bcc
-
-    def initialize
-      super
-
-      @bcc = []
-    end
-
-    def bcc=(bcc)
-      @bcc.push(bcc)
     end
   end
 end
