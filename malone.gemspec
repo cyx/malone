@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.files = `git ls-files`.split("\n")
   s.require_paths = ["lib"]
 
-  s.add_dependency "kuvert", "~> 0.1"
+  s.add_dependency "kuvert", "~> 0.0"
   s.add_development_dependency "cutest", "~> 1.2"
   s.license = "MIT"
 end
