@@ -186,6 +186,15 @@ scope do
     assert $smtp[:finish]
   end
 
+  test "adding custom headers" do |m|
+    m.deliver(to: "recipient@me.com", from: "no-reply@mydomain.com",
+              subject: "Happy new year!", text: "TEXT") do |mail|
+      mail.add_header("X-MC-SendAt", "2016-01-01 00:00:00")
+    end
+
+    assert $smtp[:blob].include?("X-MC-SendAt: 2016-01-01 00:00:00")
+  end
+
   test "calls #finish even when it fails during send_message" do |m|
     class FakeSMTP
       def send_message(*args)
