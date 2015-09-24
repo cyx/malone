@@ -5,6 +5,10 @@ class Malone
     @deliveries ||= []
   end
 
+  def self.reset_deliveries
+    @deliveries = nil
+  end
+
   def deliver(*args)
     self.class.deliveries << OpenStruct.new(*args)
   end
