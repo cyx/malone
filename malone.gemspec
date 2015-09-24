@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'malone'
-  s.version = "1.1.0"
+  s.version = "1.2.0"
   s.summary = %{The Mailman}
   s.description = %{Dead-simple Ruby mailing solution which always delivers.}
   s.date = "2011-01-10"
