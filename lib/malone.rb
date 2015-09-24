@@ -65,8 +65,9 @@ class Malone
     attr_accessor :user
     attr_accessor :password
     attr_accessor :domain
-    attr_accessor :auth
     attr_accessor :tls
+    
+    attr :auth
 
     def initialize(options)
       opts = options.dup
@@ -90,8 +91,7 @@ class Malone
     end
 
     def auth=(val)
-      @auth = val
-      @auth = @auth.to_sym if @auth
+      @auth = val && val.to_sym
     end
 
   private
