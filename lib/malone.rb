@@ -30,6 +30,7 @@ class Malone
 
   def deliver(dict)
     mail = envelope(dict)
+    yield mail if block_given?
 
     smtp = Net::SMTP.new(config.host, config.port)
     smtp.enable_starttls_auto if config.tls
